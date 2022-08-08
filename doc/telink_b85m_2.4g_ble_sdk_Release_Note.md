@@ -1,18 +1,25 @@
-## Version
-* base b85m ble single connection sdk V3.4.2.0
+# V3.0.0
+
+### Version
+* SDK version : telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.0
+* This version sdk is a initial version for b85m 2.4g/ble dual mode sdk.
 
 
 ### Features
-
-
+* support 2.4g and ble single connection function in the same sdk.
+* this version sdk support the same ble function/features as telink_b85m_ble_single_connection_sdk_v3.4.2.0.
 
 ### BREAKING CHANGES
-* N/A.
+* N/A
 
+### Version
+* SDK 版本 : base telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.0
+* 此版本为支持2.4g/ble 切换模式的初始版本SDK
 
 ### Features
-
+* 同时在此SDK中支持2.4g/ble功能
+* 此版本sdk 和 telink_b85m_ble_single_connection_sdk_v3.4.2.0 支持的同样的BLE功能与特性
 
 ### BREAKING CHANGES
-* N/A.
+* N/A
 
