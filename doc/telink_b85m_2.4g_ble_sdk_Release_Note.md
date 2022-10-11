@@ -1,3 +1,23 @@
+# V3.0.1
+
+### Version
+* SDK version : telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.1
+  
+### Features
+* add rf_set_rx/tx_modulation_index and rf_set_rx_timeout interfaces.
+
+### BREAKING CHANGES
+* N/A
+
+### Version
+* SDK 版本 : base telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.1
+
+### Features
+* 增加了rf_set_rx/tx_modulation_index 和 rf_set_rx_timeout 函数接口。
+
+### BREAKING CHANGES
+* N/A
+* 
 # V3.0.0
 
 ### Version
