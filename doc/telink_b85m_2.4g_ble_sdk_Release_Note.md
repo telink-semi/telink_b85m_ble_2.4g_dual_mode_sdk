@@ -17,7 +17,7 @@
 
 ### BREAKING CHANGES
 * N/A
-* 
+
 # V3.0.0
 
 ### Version
