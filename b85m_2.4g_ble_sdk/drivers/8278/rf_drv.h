@@ -454,7 +454,7 @@ static inline void rf_set_tx_rx_off_auto_mode(void)
 *	@return	 	failed -1,else success.
 */
 
-extern int rf_trx_state_set(RF_StatusTypeDef rf_status, signed char rf_channel);
+extern int rf_trx_state_set(RF_StatusTypeDef rf_status, signed short rf_channel);
 /**
 *	@brief	  	This function serves to get RF status.
 *	@param[in]	none.
