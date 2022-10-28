@@ -172,6 +172,18 @@ typedef enum {
 
 extern const RF_PowerTypeDef rf_power_Level_list[60];
 
+typedef enum {
+	RF_MI_P0p00 = 0,            /**< MI = 0 */
+	RF_MI_P0p32 = 32,		 	/**< MI = 0.32 */
+	RF_MI_P0p50 = 50,		  	/**< MI = 0.5 */
+	RF_MI_P0p60 = 60,		  	/**< MI = 0.6 */
+	RF_MI_P0p70 = 70,		  	/**< MI = 0.7 */
+	RF_MI_P0p80 = 80,		  	/**< MI = 0.8 */
+	RF_MI_P0p90 = 90,		  	/**< MI = 0.9 */
+	RF_MI_P1p20 = 120,		    /**< MI = 1.2 */
+	RF_MI_P1p30 = 130,		    /**< MI = 1.3 */
+	RF_MI_P1p40 = 140,		    /**< MI = 1.4 */
+}RF_MIVauleTypeDef;
 
 #ifdef		RF_MODE_250K
 #define		RF_FAST_MODE_2M		0
@@ -962,5 +974,33 @@ void tx_packet_process_1mbps(unsigned char *tx_buf, unsigned char *payload, unsi
  * @return     none
  */
 void  rf_pn_disable();
+
+/**
+ * @brief   This function serves to set RF rx timeout.
+ * @param[in]	timeout_us	-	rx_timeout after timeout_us us,The maximum of this param is 0xfff.
+ * @return  none.
+ */
+
+void rf_set_rx_timeout(unsigned short timeout_us);
+
+
+
+/**
+ * @brief	  	This function is used to  set the modulation index of the receiver.
+ *              This function is common to all modes,the order of use requirement:configure mode first,then set the the modulation index,default is 0.5 in drive,
+ *              both sides need to be consistent otherwise performance will suffer,if don't specifically request,don't need to call this function.
+ * @param[in]	mi_value- the value of modulation_index*100.
+ * @return	 	none.
+ */
+void rf_set_rx_modulation_index(RF_MIVauleTypeDef mi_value);
+
+/**
+ * @brief	  	This function is used to  set the modulation index of the sender.
+ *              This function is common to all modes,the order of use requirement:configure mode first,then set the the modulation index,default is 0.5 in drive,
+ *              both sides need to be consistent otherwise performance will suffer,if don't specifically request,don't need to call this function.
+ * @param[in]	mi_value- the value of modulation_index*100.
+ * @return	 	none.
+ */
+void rf_set_tx_modulation_index(RF_MIVauleTypeDef mi_value);
 
 #endif
