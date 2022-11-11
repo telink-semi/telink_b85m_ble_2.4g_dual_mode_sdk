@@ -1,3 +1,43 @@
+# V3.0.3
+
+### Version
+* SDK version : telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.3
+  
+### Features
+* Update the MI interface and add considerations for using the MI interface.
+
+### BREAKING CHANGES
+* N/A
+
+### Version
+* SDK 版本 : base telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.3
+
+### Features
+* 更新MI接口并添加使用MI接口注意事项。
+
+### BREAKING CHANGES
+* N/A
+
+# V3.0.2
+
+### Version
+* SDK version : telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.2
+  
+### Features
+* set rf channel failed when higher than channel 127.
+
+### BREAKING CHANGES
+* N/A
+
+### Version
+* SDK 版本 : base telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.2
+
+### Features
+* 解决设置channel大于127时频率不准的问题。
+
+### BREAKING CHANGES
+* N/A
+
 # V3.0.1
 
 ### Version
