@@ -491,6 +491,7 @@ void gen_fsk_set_pid(unsigned char *tx_buffer, unsigned char pid);
 /**
  * @brief       Set the frequency deviation of the transmitter, which follows the equation below.
  *              frequency deviation = bitrate/(modulation index)^2
+ *              Note:configure this function before state_machine acting.
  * @param       mi_value    Modulation index.
  * @return      none.
  */
@@ -499,6 +500,7 @@ void gen_fsk_tx_set_mi(GEN_MIVauleTypeDef mi_value);
 /**
  * @brief       Set the frequency deviation of the receiver, which follows the equation below.
  *              frequency deviation = bitrate/(modulation index)^2
+ *              Note:configure this function before state_machine acting.
  * @param       mi_value    Modulation index.
  * @return      none.
  */

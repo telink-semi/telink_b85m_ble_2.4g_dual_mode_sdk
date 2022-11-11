@@ -452,6 +452,7 @@ extern unsigned char ESB_IsRxPacketValid(void);
 /**
  * @brief       Set the frequency deviation of the transmitter, which follows the equation below.
  *              frequency deviation = bitrate/(modulation index)^2
+ *              Note:configure this function before state_machine acting.
  * @param       mi_value    Modulation index.
  * @return      none.
  */
@@ -460,6 +461,7 @@ extern void ESB_SetTxMI(ESB_MIVauleTypeDef mi_value);
 /**
  * @brief       Set the frequency deviation of the receiver, which follows the equation below.
  *              frequency deviation = bitrate/(modulation index)^2
+ *              Note:configure this function before state_machine acting.
  * @param       mi_value    Modulation index.
  * @return      none.
  */
