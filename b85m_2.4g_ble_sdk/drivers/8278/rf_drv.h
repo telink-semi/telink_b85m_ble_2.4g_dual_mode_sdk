@@ -174,15 +174,16 @@ extern const RF_PowerTypeDef rf_power_Level_list[60];
 
 typedef enum {
 	RF_MI_P0p00 = 0,            /**< MI = 0 */
-	RF_MI_P0p32 = 32,		 	/**< MI = 0.32 */
-	RF_MI_P0p50 = 50,		  	/**< MI = 0.5 */
-	RF_MI_P0p60 = 60,		  	/**< MI = 0.6 */
-	RF_MI_P0p70 = 70,		  	/**< MI = 0.7 */
-	RF_MI_P0p80 = 80,		  	/**< MI = 0.8 */
-	RF_MI_P0p90 = 90,		  	/**< MI = 0.9 */
-	RF_MI_P1p20 = 120,		    /**< MI = 1.2 */
-	RF_MI_P1p30 = 130,		    /**< MI = 1.3 */
-	RF_MI_P1p40 = 140,		    /**< MI = 1.4 */
+	RF_MI_P0p076= 76,			/**< MI = 0.076 This gear is only available in private mode*/
+	RF_MI_P0p32 = 320,		 	/**< MI = 0.32 */
+	RF_MI_P0p50 = 500,		  	/**< MI = 0.5 */
+	RF_MI_P0p60 = 600,		  	/**< MI = 0.6 */
+	RF_MI_P0p70 = 700,		  	/**< MI = 0.7 */
+	RF_MI_P0p80 = 800,		  	/**< MI = 0.8 */
+	RF_MI_P0p90 = 900,		  	/**< MI = 0.9 */
+	RF_MI_P1p20 = 1200,		    /**< MI = 1.2 */
+	RF_MI_P1p30 = 1300,		    /**< MI = 1.3 */
+	RF_MI_P1p40 = 1400,		    /**< MI = 1.4 */
 }RF_MIVauleTypeDef;
 
 #ifdef		RF_MODE_250K

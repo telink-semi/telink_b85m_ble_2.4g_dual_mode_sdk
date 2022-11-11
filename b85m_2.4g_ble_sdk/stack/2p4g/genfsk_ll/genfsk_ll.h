@@ -115,16 +115,17 @@ typedef enum {
 
 /**@brief Enhanced ShockBurst modulation index. */
 typedef enum {
-	GEN_FSK_RF_MI_000 = 0,		 	/**< MI = 0 */
-	GEN_FSK_RF_MI_032 = 32,		 	/**< MI = 0.32 */
-	GEN_FSK_RF_MI_050 = 50,		  	/**< MI = 0.5 */
-	GEN_FSK_RF_MI_060 = 60,		  	/**< MI = 0.6 */
-	GEN_FSK_RF_MI_070 = 70,		  	/**< MI = 0.7 */
-	GEN_FSK_RF_MI_080 = 80,		  	/**< MI = 0.8 */
-	GEN_FSK_RF_MI_090 = 90,		  	/**< MI = 0.9 */
-	GEN_FSK_RF_MI_120 = 120,		/**< MI = 1.2 */
-	GEN_FSK_RF_MI_130 = 130,		/**< MI = 1.3 */
-	GEN_FSK_RF_MI_140 = 140,		/**< MI = 1.4 */
+	GEN_FSK_RF_MI_0000 = 0,		 	/**< MI = 0 */
+	GEN_FSK_RF_MI_0076 = 76,		/**< MI = 0.076 This gear is only available in private mode*/
+	GEN_FSK_RF_MI_0320 = 320,		/**< MI = 0.32 */
+	GEN_FSK_RF_MI_0500 = 500,		/**< MI = 0.5 */
+	GEN_FSK_RF_MI_0600 = 600,		/**< MI = 0.6 */
+	GEN_FSK_RF_MI_0700 = 700,		/**< MI = 0.7 */
+	GEN_FSK_RF_MI_0800 = 800,		/**< MI = 0.8 */
+	GEN_FSK_RF_MI_0900 = 900,		/**< MI = 0.9 */
+	GEN_FSK_RF_MI_1200 = 1200,		/**< MI = 1.2 */
+	GEN_FSK_RF_MI_1300 = 1300,		/**< MI = 1.3 */
+	GEN_FSK_RF_MI_1400 = 1400,		/**< MI = 1.4 */
 }GEN_MIVauleTypeDef;
 
 
