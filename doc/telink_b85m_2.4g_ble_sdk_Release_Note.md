@@ -1,3 +1,23 @@
+# V3.0.4
+
+### Version
+* SDK version : telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.4
+  
+### Features
+* Add ota and ble_beacon_tx routines. 
+
+### BREAKING CHANGES
+* Normalize the naming of content related to private schemas.
+
+### Version
+* SDK 版本 : base telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.4
+
+### Features
+* 添加ota 跟 ble_beacon_tx例程。
+
+### BREAKING CHANGES
+* 规范化与私有模式相关内容的命名。
+
 # V3.0.3
 
 ### Version
