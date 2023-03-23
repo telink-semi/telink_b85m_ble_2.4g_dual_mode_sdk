@@ -1,5 +1,5 @@
 /********************************************************************************************************
- * @file	user_config.h
+ * @file	app_config.h
  *
  * @brief	This is the header file for BLE SDK
  *
@@ -45,36 +45,17 @@
  *******************************************************************************************************/
 #pragma once
 
-#if (__PROJECT_8255_BLE_REMOTE__)
-	#include "../b85m_ble_remote/app_config.h"
-#elif (__PROJECT_8258_BLE_REMOTE__ || __PROJECT_8278_BLE_REMOTE__)
-	#include "../b85m_ble_remote/app_config.h"
-#elif (__PROJECT_8258_BLE_SAMPLE__ || __PROJECT_8278_BLE_SAMPLE__)
-	#include "../b85m_ble_sample/app_config.h"
-#elif (__PROJECT_8258_MODULE__ || __PROJECT_8278_MODULE__)
-	#include "../b85m_module/app_config.h"
-#elif (__PROJECT_8258_HCI__ || __PROJECT_8278_HCI__)
-	#include "../b85m_hci/app_config.h"
-#elif (__PROJECT_8258_FEATURE_TEST__ || __PROJECT_8278_FEATURE_TEST__)
-	#include "../b85m_feature_test/app_config.h"
-#elif(__PROJECT_8258_MASTER_KMA_DONGLE__ || __PROJECT_8278_MASTER_KMA_DONGLE__ )
-	#include "../b85m_master_kma_dongle/app_config.h"
-#elif(__PROJECT_8258_MASTER_SLAVE__ )
-	#include "../b85m_master_slave/app_config.h"
-#elif(__PROJECT_8258_BQB_LOWER_TESTER__ )
-	#include "../b85m_bqb_lowertester/app_config.h"
-#elif(__PROJECT_8258_INTERNAL_TEST__ ||  __PROJECT_8278_INTERNAL_TEST__)
-	#include "../b85m_internal_test/app_config.h"
-#elif(__PROJECT_8258_DRIVER_TEST__ ||  __PROJECT_8278_DRIVER_TEST__)
-	#include "../b85m_driver_test/app_config.h"
+#define UART_PRINT_DEBUG_ENABLE               1   //GPIO simulate uart print func
 
-#elif (__PROJECT_8258_OTA_MASTER__ || __PROJECT_8278_OTA_MASTER__)
-	#include "../b85m_2p4g_ota_master/app_config.h"
-#elif (__PROJECT_8258_OTA_SLAVE__ || __PROJECT_8278_OTA_SLAVE__)
-	#include "../b85m_2p4g_ota_slave/app_config.h"
-#elif (__PROJECT_8258_OTA_SLAVE2__ || __PROJECT_8278_OTA_SLAVE2__)
-	#include "../b85m_2p4g_ota_slave2/app_config.h"
-#else
-	#include "../common/default_config.h"
+#if (UART_PRINT_DEBUG_ENABLE)
+
+    //the baud rate should not bigger than 1M(system timer clock is constant 16M)
+    #define PRINT_BAUD_RATE                   1000000
+    #define DEBUG_INFO_TX_PIN                 GPIO_PB1
+    #define PULL_WAKEUP_SRC_PB1               PM_PIN_PULLUP_10K
+    #define PB1_OUTPUT_ENABLE                 1
+    #define PB1_DATA_OUT                      1 //must
+    #include "application/print/u_printf.h"
 #endif
 
+#include "vendor/common/default_config.h"

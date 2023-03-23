@@ -113,7 +113,7 @@ typedef enum {
 } gen_fsk_radio_power_t;
 
 
-/**@brief Enhanced ShockBurst modulation index. */
+/**@brief rf modulation index. */
 typedef enum {
 	GEN_FSK_RF_MI_0000 = 0,		 	/**< MI = 0 */
 	GEN_FSK_RF_MI_0076 = 76,		/**< MI = 0.076 This gear is only available in private mode*/

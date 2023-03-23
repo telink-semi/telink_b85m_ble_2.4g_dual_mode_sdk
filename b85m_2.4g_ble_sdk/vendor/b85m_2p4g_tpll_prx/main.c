@@ -45,7 +45,7 @@
  *******************************************************************************************************/
 
 #include "drivers.h"
-#include "stack/2p4g/esb_ll/esb_ll.h"
+#include "stack/2p4g/tpll/tpll.h"
 
 #define GREEN_LED_PIN           GPIO_PD3
 #define ACK_PAYLOAD_LEN         32
@@ -69,24 +69,24 @@ void user_init(unsigned char chnn)
     gpio_set_input_en(GREEN_LED_PIN, 0);
     gpio_write(GREEN_LED_PIN, 1);
 
-    ESB_Init(ESB_BITRATE_2MBPS);
-    ESB_SetOutputPower(ESB_RF_POWER_0DBM);
-    ESB_SetAddressWidth(ADDRESS_WIDTH_5BYTES);
-    ESB_ClosePipe(ESB_PIPE_ALL);
+    TPLL_Init(TPLL_BITRATE_2MBPS);
+    TPLL_SetOutputPower(TPLL_RF_POWER_0DBM);
+    TPLL_SetAddressWidth(ADDRESS_WIDTH_5BYTES);
+    TPLL_ClosePipe(TPLL_PIPE_ALL);
 
     unsigned char tx_address[5] = {0xe7,0xe7,0xe7,0xe7,0xe7}; //{0xaa,0xbb,0xcc,0xdd,0xee};
-    ESB_SetAddress(ESB_PIPE0, tx_address);
-    ESB_OpenPipe(ESB_PIPE0);
-    ESB_SetTXPipe(ESB_PIPE0);
+    TPLL_SetAddress(TPLL_PIPE0, tx_address);
+    TPLL_OpenPipe(TPLL_PIPE0);
+    TPLL_SetTXPipe(TPLL_PIPE0);
 
-    ESB_ModeSet(ESB_MODE_PRX);
-    ESB_SetRFChannel(chnn);
-    ESB_SetAutoRetry(0,150);  //5,150
-    ESB_RxTimeoutSet(500);//if the mode is 250k ,the rx_time_out need more time, as so 1000us is ok!
-    ESB_RxSettleSet(98);
-    ESB_TxSettleSet(149);
+    TPLL_ModeSet(TPLL_MODE_PRX);
+    TPLL_SetRFChannel(chnn);
+    TPLL_SetAutoRetry(0,150);  //5,150
+    TPLL_RxTimeoutSet(500);//if the mode is 250k ,the rx_time_out need more time, as so 1000us is ok!
+    TPLL_RxSettleSet(98);
+    TPLL_TxSettleSet(149);
 
-    ESB_Preamble_Set(8);
+    TPLL_Preamble_Set(8);
 
     WaitUs(150);
     //configure irq
@@ -110,16 +110,16 @@ void main_loop(void)
 
         rx_dr_flag = 0;
 
-        length_pip_ret = ESB_ReadRxPayload(&rx_data);
+        length_pip_ret = TPLL_ReadRxPayload(&rx_data);
 
-        rx_interval_us = (ESB_GetTimestamp() - timestamp_value) >> 4;
+        rx_interval_us = (TPLL_GetTimestamp() - timestamp_value) >> 4;
 
-        timestamp_value = ESB_GetTimestamp();
+        timestamp_value = TPLL_GetTimestamp();
 
-        rssi_value = ESB_GetRxRssiValue();
+        rssi_value = TPLL_GetRxRssiValue();
 
-        while(!ESB_TxFifoEmpty(0));
-        ESB_WriteAckPayload(ESB_PIPE0, ack_payload, ACK_PAYLOAD_LEN);
+        while(!TPLL_TxFifoEmpty(0));
+        TPLL_WriteAckPayload(TPLL_PIPE0, ack_payload, ACK_PAYLOAD_LEN);
     }
 }
 
@@ -147,7 +147,7 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 
     irq_enable();
 
-    ESB_PRXTrig();
+    TPLL_PRXTrig();
 
     timestamp_value = clock_time();
 

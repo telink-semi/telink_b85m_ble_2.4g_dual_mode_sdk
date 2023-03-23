@@ -1,12 +1,12 @@
 /********************************************************************************************************
- * @file	user_config.h
+ * @file    main.c
  *
- * @brief	This is the header file for BLE SDK
+ * @brief   This is the source file for 8355
  *
- * @author	BLE GROUP
- * @date	06,2020
+ * @author  2.4G Group
+ * @date    2022
  *
- * @par     Copyright (c) 2020, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
+ * @par     Copyright (c) 2019, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
  *          All rights reserved.
  *
  *          Redistribution and use in source and binary forms, with or without
@@ -43,38 +43,51 @@
  *          SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *******************************************************************************************************/
-#pragma once
+#include "drivers.h"
 
-#if (__PROJECT_8255_BLE_REMOTE__)
-	#include "../b85m_ble_remote/app_config.h"
-#elif (__PROJECT_8258_BLE_REMOTE__ || __PROJECT_8278_BLE_REMOTE__)
-	#include "../b85m_ble_remote/app_config.h"
-#elif (__PROJECT_8258_BLE_SAMPLE__ || __PROJECT_8278_BLE_SAMPLE__)
-	#include "../b85m_ble_sample/app_config.h"
-#elif (__PROJECT_8258_MODULE__ || __PROJECT_8278_MODULE__)
-	#include "../b85m_module/app_config.h"
-#elif (__PROJECT_8258_HCI__ || __PROJECT_8278_HCI__)
-	#include "../b85m_hci/app_config.h"
-#elif (__PROJECT_8258_FEATURE_TEST__ || __PROJECT_8278_FEATURE_TEST__)
-	#include "../b85m_feature_test/app_config.h"
-#elif(__PROJECT_8258_MASTER_KMA_DONGLE__ || __PROJECT_8278_MASTER_KMA_DONGLE__ )
-	#include "../b85m_master_kma_dongle/app_config.h"
-#elif(__PROJECT_8258_MASTER_SLAVE__ )
-	#include "../b85m_master_slave/app_config.h"
-#elif(__PROJECT_8258_BQB_LOWER_TESTER__ )
-	#include "../b85m_bqb_lowertester/app_config.h"
-#elif(__PROJECT_8258_INTERNAL_TEST__ ||  __PROJECT_8278_INTERNAL_TEST__)
-	#include "../b85m_internal_test/app_config.h"
-#elif(__PROJECT_8258_DRIVER_TEST__ ||  __PROJECT_8278_DRIVER_TEST__)
-	#include "../b85m_driver_test/app_config.h"
+volatile unsigned int tx_irq_cnt_tx, tx_irq_cnt_rx_dr, tx_irq_cnt_invalid_pid,
+                    tx_irq_cnt_max_retry, tx_irq_cnt_tx_ds;
+volatile unsigned char rx_flag, ds_flag, maxretry_flag;
+/**
+ * @brief   IRQ handler
+ * @param   none.
+ * @return  none.
+ */
+__attribute__((section(".ram_code")))__attribute__((optimize("-Os"))) void irq_handler(void)
+{
+    unsigned short src_rf = rf_irq_src_get();
+    unsigned char pipe = TPLL_GetTXPipe();
 
-#elif (__PROJECT_8258_OTA_MASTER__ || __PROJECT_8278_OTA_MASTER__)
-	#include "../b85m_2p4g_ota_master/app_config.h"
-#elif (__PROJECT_8258_OTA_SLAVE__ || __PROJECT_8278_OTA_SLAVE__)
-	#include "../b85m_2p4g_ota_slave/app_config.h"
-#elif (__PROJECT_8258_OTA_SLAVE2__ || __PROJECT_8278_OTA_SLAVE2__)
-	#include "../b85m_2p4g_ota_slave2/app_config.h"
-#else
-	#include "../common/default_config.h"
-#endif
+    if (src_rf & FLD_RF_IRQ_TX)
+    {
+        rf_irq_clr_src(FLD_RF_IRQ_TX);
+        tx_irq_cnt_tx++;
+    }
+    if (src_rf & FLD_RF_IRQ_INVALID_PID)
+    {
+        rf_irq_clr_src(FLD_RF_IRQ_INVALID_PID);
+        tx_irq_cnt_invalid_pid++;
+    }
+    if (src_rf & FLD_RF_IRQ_RETRY_HIT)
+    {
+        rf_irq_clr_src(FLD_RF_IRQ_RETRY_HIT);
+        tx_irq_cnt_max_retry++;
+        maxretry_flag = 1;
+        //adjust rptr
+        TPLL_UpdateTXFifoRptr(pipe);
 
+    }
+    if (src_rf & FLD_RF_IRQ_TX_DS)
+    {
+        rf_irq_clr_src(FLD_RF_IRQ_TX_DS);
+        tx_irq_cnt_tx_ds++;
+        ds_flag = 1;
+
+    }
+    if (src_rf & FLD_RF_IRQ_RX_DR)
+    {
+        rf_irq_clr_src(FLD_RF_IRQ_RX_DR);
+        tx_irq_cnt_rx_dr++;
+        rx_flag = 1;
+    }
+}

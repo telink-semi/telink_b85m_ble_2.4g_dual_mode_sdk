@@ -44,7 +44,7 @@
  *
  *******************************************************************************************************/
 #include "drivers.h"
-#include "stack/2p4g/esb_ll/esb_ll.h"
+#include "stack/2p4g/tpll/tpll.h"
 
 #define GREEN_LED_PIN           GPIO_PD3
 #define RED_LED_PIN             GPIO_PD5
@@ -68,24 +68,24 @@ void user_init(unsigned char chnn)
     gpio_set_input_en(GREEN_LED_PIN | RED_LED_PIN, 0);
     gpio_write(GREEN_LED_PIN | RED_LED_PIN, 0);
 
-    ESB_Init(ESB_BITRATE_2MBPS);
-    ESB_SetOutputPower(ESB_RF_POWER_0DBM);
-    ESB_SetAddressWidth(ADDRESS_WIDTH_5BYTES);
-    ESB_ClosePipe(ESB_PIPE_ALL);
+    TPLL_Init(TPLL_BITRATE_2MBPS);
+    TPLL_SetOutputPower(TPLL_RF_POWER_0DBM);
+    TPLL_SetAddressWidth(ADDRESS_WIDTH_5BYTES);
+    TPLL_ClosePipe(TPLL_PIPE_ALL);
 
     unsigned char tx_address[5] = {0xe7,0xe7,0xe7,0xe7,0xe7}; //{0xaa,0xbb,0xcc,0xdd,0xee};
-    ESB_SetAddress(ESB_PIPE0, tx_address);
-    ESB_OpenPipe(ESB_PIPE0);
-    ESB_SetTXPipe(ESB_PIPE0);
+    TPLL_SetAddress(TPLL_PIPE0, tx_address);
+    TPLL_OpenPipe(TPLL_PIPE0);
+    TPLL_SetTXPipe(TPLL_PIPE0);
 
-    ESB_ModeSet(ESB_MODE_PTX);
-    ESB_SetRFChannel(chnn);
-    ESB_SetAutoRetry(0,150);  //5,150
-    ESB_RxTimeoutSet(500);//if the mode is 250k ,the rx_time_out need more time, as so 1000us is ok!
-    ESB_RxSettleSet(99);
-    ESB_TxSettleSet(149);
+    TPLL_ModeSet(TPLL_MODE_PTX);
+    TPLL_SetRFChannel(chnn);
+    TPLL_SetAutoRetry(0,150);  //5,150
+    TPLL_RxTimeoutSet(500);//if the mode is 250k ,the rx_time_out need more time, as so 1000us is ok!
+    TPLL_RxSettleSet(99);
+    TPLL_TxSettleSet(149);
 
-    ESB_Preamble_Set(8);
+    TPLL_Preamble_Set(8);
 
     WaitUs(150);
     //configure irq
@@ -106,7 +106,7 @@ void user_init(unsigned char chnn)
 void main_loop(void)
 {
     loop_cnt++;
-    preamble_len = ESB_Preamble_Read();
+    preamble_len = TPLL_Preamble_Read();
     if (ds_flag || maxretry_flag)
     {
         if (ds_flag)
@@ -123,10 +123,10 @@ void main_loop(void)
         WaitMs(500);
 
         tx_data[0]++;
-        tmp = ESB_WriteTxPayload(ESB_PIPE0, tx_data, 32);
+        tmp = TPLL_WriteTxPayload(TPLL_PIPE0, tx_data, 32);
         if (tmp)
         {
-            ESB_PTXTrig();
+            TPLL_PTXTrig();
         }
     }
 }

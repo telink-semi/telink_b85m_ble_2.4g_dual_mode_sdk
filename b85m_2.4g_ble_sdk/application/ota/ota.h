@@ -1,12 +1,12 @@
 /********************************************************************************************************
- * @file	user_config.h
+ * @file	ota.h
  *
- * @brief	This is the header file for BLE SDK
+ * @brief	This is the header file for 8355
  *
- * @author	BLE GROUP
- * @date	06,2020
+ * @author	2.4G Group
+ * @date	2019
  *
- * @par     Copyright (c) 2020, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
+ * @par     Copyright (c) 2019, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
  *          All rights reserved.
  *
  *          Redistribution and use in source and binary forms, with or without
@@ -43,38 +43,99 @@
  *          SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *******************************************************************************************************/
-#pragma once
 
-#if (__PROJECT_8255_BLE_REMOTE__)
-	#include "../b85m_ble_remote/app_config.h"
-#elif (__PROJECT_8258_BLE_REMOTE__ || __PROJECT_8278_BLE_REMOTE__)
-	#include "../b85m_ble_remote/app_config.h"
-#elif (__PROJECT_8258_BLE_SAMPLE__ || __PROJECT_8278_BLE_SAMPLE__)
-	#include "../b85m_ble_sample/app_config.h"
-#elif (__PROJECT_8258_MODULE__ || __PROJECT_8278_MODULE__)
-	#include "../b85m_module/app_config.h"
-#elif (__PROJECT_8258_HCI__ || __PROJECT_8278_HCI__)
-	#include "../b85m_hci/app_config.h"
-#elif (__PROJECT_8258_FEATURE_TEST__ || __PROJECT_8278_FEATURE_TEST__)
-	#include "../b85m_feature_test/app_config.h"
-#elif(__PROJECT_8258_MASTER_KMA_DONGLE__ || __PROJECT_8278_MASTER_KMA_DONGLE__ )
-	#include "../b85m_master_kma_dongle/app_config.h"
-#elif(__PROJECT_8258_MASTER_SLAVE__ )
-	#include "../b85m_master_slave/app_config.h"
-#elif(__PROJECT_8258_BQB_LOWER_TESTER__ )
-	#include "../b85m_bqb_lowertester/app_config.h"
-#elif(__PROJECT_8258_INTERNAL_TEST__ ||  __PROJECT_8278_INTERNAL_TEST__)
-	#include "../b85m_internal_test/app_config.h"
-#elif(__PROJECT_8258_DRIVER_TEST__ ||  __PROJECT_8278_DRIVER_TEST__)
-	#include "../b85m_driver_test/app_config.h"
+#ifndef _OTA_H_
+#define _OTA_H_
 
-#elif (__PROJECT_8258_OTA_MASTER__ || __PROJECT_8278_OTA_MASTER__)
-	#include "../b85m_2p4g_ota_master/app_config.h"
-#elif (__PROJECT_8258_OTA_SLAVE__ || __PROJECT_8278_OTA_SLAVE__)
-	#include "../b85m_2p4g_ota_slave/app_config.h"
-#elif (__PROJECT_8258_OTA_SLAVE2__ || __PROJECT_8278_OTA_SLAVE2__)
-	#include "../b85m_2p4g_ota_slave2/app_config.h"
-#else
-	#include "../common/default_config.h"
-#endif
 
+
+
+#define OTA_SLAVE_BIN_ADDR_0x40000   0x40000
+#define OTA_SLAVE_BIN_ADDR_0x20000   0x20000
+
+#define OTA_SLAVE_BIN_ADDR           OTA_SLAVE_BIN_ADDR_0x20000
+
+#define OTA_FRAME_TYPE_CMD        0x01
+#define OTA_FRAME_TYPE_DATA       0x02
+#define OTA_FRAME_TYPE_ACK        0x03
+
+#define OTA_CMD_ID_START_REQ      0x01
+#define OTA_CMD_ID_START_RSP      0x02
+#define OTA_CMD_ID_END_REQ        0x03
+#define OTA_CMD_ID_END_RSP        0x04
+#define OTA_CMD_ID_VERSION_REQ    0x05
+#define OTA_CMD_ID_VERSION_RSP    0x06
+
+
+
+
+#define OTA_FRAME_PAYLOAD_MAX     (48+2)
+#define OTA_RETRY_MAX             3
+#define OTA_APPEND_INFO_LEN       2 // FW_CRC 2 BYTE
+
+typedef struct {
+    unsigned int FlashAddr;
+    unsigned int TotalBinSize;
+    unsigned short MaxBlockNum;
+    unsigned short BlockNum;
+    unsigned short PeerAddr;
+    unsigned short FwVersion;
+    unsigned short FwCRC;
+    unsigned short PktCRC;
+    unsigned short TargetFwCRC;
+    unsigned char State;
+    unsigned char RetryTimes;
+    unsigned char FinishFlag;
+} OTA_CtrlTypeDef;
+
+typedef struct {
+    unsigned char Type;
+    unsigned char Payload[OTA_FRAME_PAYLOAD_MAX];
+} OTA_FrameTypeDef;
+
+enum {
+    OTA_MASTER_STATE_IDLE = 0,
+    OTA_MASTER_STATE_FW_VER_WAIT,
+    OTA_MASTER_STATE_START_RSP_WAIT,
+    OTA_MASTER_STATE_DATA_ACK_WAIT,
+    OTA_MASTER_STATE_END_RSP_WAIT,
+    OTA_MASTER_STATE_END,
+    OTA_MASTER_STATE_ERROR,
+};
+
+enum {
+    OTA_SLAVE_STATE_IDLE = 0,
+    OTA_SLAVE_STATE_FW_VERSION_READY,
+    OTA_SLAVE_STATE_START_READY,
+    OTA_SLAVE_STATE_DATA_READY,
+    OTA_SLAVE_STATE_END_READY,
+    OTA_SLAVE_STATE_END,
+    OTA_SLAVE_STATE_ERROR
+};
+
+enum {
+    OTA_MSG_TYPE_INVALID_DATA = 0,
+    OTA_MSG_TYPE_DATA,
+    OTA_MSG_TYPE_TIMEOUT,
+};
+
+
+
+typedef enum{
+
+	GEN_FSK_STX_MODE = 0,
+	GEN_FSK_SRX_MODE = 1,
+
+}Gen_Fsk_Mode_Slect;
+
+extern void OTA_MasterInit(unsigned int OTABinAddr, unsigned short FwVer);
+extern void OTA_MasterStart(void);
+
+extern void OTA_SlaveInit(unsigned int OTABinAddr, unsigned short FwVer);
+extern void OTA_SlaveStart(void);
+
+extern void OTA_RxIrq(unsigned char *Data);
+extern void OTA_RxTimeoutIrq(unsigned char *Data);
+
+
+#endif /*_OTA_H_*/

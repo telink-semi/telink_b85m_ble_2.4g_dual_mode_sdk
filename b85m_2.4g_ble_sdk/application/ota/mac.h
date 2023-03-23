@@ -1,10 +1,10 @@
 /********************************************************************************************************
- * @file    main.c
+ * @file	mac.h
  *
- * @brief   This is the source file for 8355
+ * @brief	This is the header file for 8355
  *
- * @author  2.4G Group
- * @date    2022
+ * @author	2.4G Group
+ * @date	2019
  *
  * @par     Copyright (c) 2019, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
  *          All rights reserved.
@@ -43,51 +43,23 @@
  *          SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *******************************************************************************************************/
-#include "drivers.h"
 
-volatile unsigned int tx_irq_cnt_tx, tx_irq_cnt_rx_dr, tx_irq_cnt_invalid_pid,
-                    tx_irq_cnt_max_retry, tx_irq_cnt_tx_ds;
-volatile unsigned char rx_flag, ds_flag, maxretry_flag;
-/**
- * @brief   IRQ handler
- * @param   none.
- * @return  none.
- */
-__attribute__((section(".ram_code")))__attribute__((optimize("-Os"))) void irq_handler(void)
-{
-    unsigned short src_rf = rf_irq_src_get();
-    unsigned char pipe = ESB_GetTXPipe();
+#ifndef _MAC_H_
+#define _MAC_H_
 
-    if (src_rf & FLD_RF_IRQ_TX)
-    {
-        rf_irq_clr_src(FLD_RF_IRQ_TX);
-        tx_irq_cnt_tx++;
-    }
-    if (src_rf & FLD_RF_IRQ_INVALID_PID)
-    {
-        rf_irq_clr_src(FLD_RF_IRQ_INVALID_PID);
-        tx_irq_cnt_invalid_pid++;
-    }
-    if (src_rf & FLD_RF_IRQ_RETRY_HIT)
-    {
-        rf_irq_clr_src(FLD_RF_IRQ_RETRY_HIT);
-        tx_irq_cnt_max_retry++;
-        maxretry_flag = 1;
-        //adjust rptr
-        ESB_UpdateTXFifoRptr(pipe);
+typedef void (*MAC_Cb)(unsigned char *Data);
 
-    }
-    if (src_rf & FLD_RF_IRQ_TX_DS)
-    {
-        rf_irq_clr_src(FLD_RF_IRQ_TX_DS);
-        tx_irq_cnt_tx_ds++;
-        ds_flag = 1;
+extern void MAC_Init(const unsigned short Channel,
+                     const MAC_Cb RxCb,
+                     const MAC_Cb RxTimeoutCb,
+                     const MAC_Cb RxFirstTimeoutCb);
 
-    }
-    if (src_rf & FLD_RF_IRQ_RX_DR)
-    {
-        rf_irq_clr_src(FLD_RF_IRQ_RX_DR);
-        tx_irq_cnt_rx_dr++;
-        rx_flag = 1;
-    }
-}
+extern void MAC_SendData(const unsigned char *Payload,
+                        const int PayloadLen);
+
+extern void MAC_RecvData(unsigned int TimeUs);
+extern void MAC_RxIrqHandler(void);
+extern void MAC_RxTimeOutHandler(void);
+extern void MAC_RxFirstTimeOutHandler(void);
+
+#endif /* _MAC_H_ */

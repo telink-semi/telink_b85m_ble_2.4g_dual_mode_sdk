@@ -1,12 +1,12 @@
 /********************************************************************************************************
- * @file	user_config.h
+ * @file	ble_adv.h
  *
- * @brief	This is the header file for BLE SDK
+ * @brief	This is the header file for 8355
  *
- * @author	BLE GROUP
- * @date	06,2020
+ * @author	2.4G Group
+ * @date	2019
  *
- * @par     Copyright (c) 2020, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
+ * @par     Copyright (c) 2019, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
  *          All rights reserved.
  *
  *          Redistribution and use in source and binary forms, with or without
@@ -43,38 +43,33 @@
  *          SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *******************************************************************************************************/
-#pragma once
 
-#if (__PROJECT_8255_BLE_REMOTE__)
-	#include "../b85m_ble_remote/app_config.h"
-#elif (__PROJECT_8258_BLE_REMOTE__ || __PROJECT_8278_BLE_REMOTE__)
-	#include "../b85m_ble_remote/app_config.h"
-#elif (__PROJECT_8258_BLE_SAMPLE__ || __PROJECT_8278_BLE_SAMPLE__)
-	#include "../b85m_ble_sample/app_config.h"
-#elif (__PROJECT_8258_MODULE__ || __PROJECT_8278_MODULE__)
-	#include "../b85m_module/app_config.h"
-#elif (__PROJECT_8258_HCI__ || __PROJECT_8278_HCI__)
-	#include "../b85m_hci/app_config.h"
-#elif (__PROJECT_8258_FEATURE_TEST__ || __PROJECT_8278_FEATURE_TEST__)
-	#include "../b85m_feature_test/app_config.h"
-#elif(__PROJECT_8258_MASTER_KMA_DONGLE__ || __PROJECT_8278_MASTER_KMA_DONGLE__ )
-	#include "../b85m_master_kma_dongle/app_config.h"
-#elif(__PROJECT_8258_MASTER_SLAVE__ )
-	#include "../b85m_master_slave/app_config.h"
-#elif(__PROJECT_8258_BQB_LOWER_TESTER__ )
-	#include "../b85m_bqb_lowertester/app_config.h"
-#elif(__PROJECT_8258_INTERNAL_TEST__ ||  __PROJECT_8278_INTERNAL_TEST__)
-	#include "../b85m_internal_test/app_config.h"
-#elif(__PROJECT_8258_DRIVER_TEST__ ||  __PROJECT_8278_DRIVER_TEST__)
-	#include "../b85m_driver_test/app_config.h"
+#ifndef _BLE_ADV_H_
+#define _BLE_ADV_H_
 
-#elif (__PROJECT_8258_OTA_MASTER__ || __PROJECT_8278_OTA_MASTER__)
-	#include "../b85m_2p4g_ota_master/app_config.h"
-#elif (__PROJECT_8258_OTA_SLAVE__ || __PROJECT_8278_OTA_SLAVE__)
-	#include "../b85m_2p4g_ota_slave/app_config.h"
-#elif (__PROJECT_8258_OTA_SLAVE2__ || __PROJECT_8278_OTA_SLAVE2__)
-	#include "../b85m_2p4g_ota_slave2/app_config.h"
-#else
-	#include "../common/default_config.h"
-#endif
+/**
+ * @brief       This function sets the channel inndex and tx power of BLE advertising packets
+ *              with specific 16-Byte key
+ * @param[in]   channel_index channel index of the advertising channnel(i.e., 37, 38 or 39)
+ * @param[in]   tx_power the rf power to transmit the adv packets
+ * @param[out]  none
+ * @return      none
+ *              
+ */
+extern void ble_adv_init(unsigned char channel_index, RF_PowerTypeDef tx_power);
 
+/**
+ * @brief       This function servers to send the BLE advertising packet
+ *              with given pdu.
+ * @param[in]   pdu pointer to the buffer containing the pdu needs to be send out. Note
+ *              that the pdu includes the two-byte header filed, i.e.,
+ *              pdu = header0 + header1(payload length) + payload
+ * @param[in]   pdu_len the length of the pdu in octet
+ * @param[out]  none
+ * @return      none
+ *              
+ */
+extern void ble_adv_send(unsigned char *pdu, unsigned char pdu_len);
+
+
+#endif /* _BLE_ADV_H_ */

@@ -1,12 +1,12 @@
 /********************************************************************************************************
- * @file	user_config.h
+ * @file	interrupt.c
  *
- * @brief	This is the header file for BLE SDK
+ * @brief	This is the source file for 8355
  *
- * @author	BLE GROUP
- * @date	06,2020
+ * @author	2.4G Group
+ * @date	2019
  *
- * @par     Copyright (c) 2020, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
+ * @par     Copyright (c) 2019, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
  *          All rights reserved.
  *
  *          Redistribution and use in source and binary forms, with or without
@@ -43,38 +43,50 @@
  *          SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *******************************************************************************************************/
-#pragma once
 
-#if (__PROJECT_8255_BLE_REMOTE__)
-	#include "../b85m_ble_remote/app_config.h"
-#elif (__PROJECT_8258_BLE_REMOTE__ || __PROJECT_8278_BLE_REMOTE__)
-	#include "../b85m_ble_remote/app_config.h"
-#elif (__PROJECT_8258_BLE_SAMPLE__ || __PROJECT_8278_BLE_SAMPLE__)
-	#include "../b85m_ble_sample/app_config.h"
-#elif (__PROJECT_8258_MODULE__ || __PROJECT_8278_MODULE__)
-	#include "../b85m_module/app_config.h"
-#elif (__PROJECT_8258_HCI__ || __PROJECT_8278_HCI__)
-	#include "../b85m_hci/app_config.h"
-#elif (__PROJECT_8258_FEATURE_TEST__ || __PROJECT_8278_FEATURE_TEST__)
-	#include "../b85m_feature_test/app_config.h"
-#elif(__PROJECT_8258_MASTER_KMA_DONGLE__ || __PROJECT_8278_MASTER_KMA_DONGLE__ )
-	#include "../b85m_master_kma_dongle/app_config.h"
-#elif(__PROJECT_8258_MASTER_SLAVE__ )
-	#include "../b85m_master_slave/app_config.h"
-#elif(__PROJECT_8258_BQB_LOWER_TESTER__ )
-	#include "../b85m_bqb_lowertester/app_config.h"
-#elif(__PROJECT_8258_INTERNAL_TEST__ ||  __PROJECT_8278_INTERNAL_TEST__)
-	#include "../b85m_internal_test/app_config.h"
-#elif(__PROJECT_8258_DRIVER_TEST__ ||  __PROJECT_8278_DRIVER_TEST__)
-	#include "../b85m_driver_test/app_config.h"
+#include "drivers.h"
+#include "common/types.h"
+#include "mac.h"
+#define OTA_MASTER_TRIG_PIN    GPIO_PB4
 
-#elif (__PROJECT_8258_OTA_MASTER__ || __PROJECT_8278_OTA_MASTER__)
-	#include "../b85m_2p4g_ota_master/app_config.h"
-#elif (__PROJECT_8258_OTA_SLAVE__ || __PROJECT_8278_OTA_SLAVE__)
-	#include "../b85m_2p4g_ota_slave/app_config.h"
-#elif (__PROJECT_8258_OTA_SLAVE2__ || __PROJECT_8278_OTA_SLAVE2__)
-	#include "../b85m_2p4g_ota_slave2/app_config.h"
-#else
-	#include "../common/default_config.h"
-#endif
+extern volatile unsigned char OTA_MasterTrig;
+volatile unsigned char tx_done_cnt, rx_done_cnt, first_timeout_done, rx_timeout_done;
+_attribute_ram_code_sec_noinline_ __attribute__((optimize("-Os"))) void irq_handler(void)
+{
+
+    unsigned int irq_src = irq_get_src();
+    unsigned short src_rf = rf_irq_src_get();
+
+    if (irq_src & FLD_IRQ_GPIO_EN) {
+    	if (0 == gpio_read(OTA_MASTER_TRIG_PIN)) {
+			WaitUs(10);
+			if (0 == gpio_read(OTA_MASTER_TRIG_PIN)) {
+				while(0 == gpio_read(OTA_MASTER_TRIG_PIN));
+				OTA_MasterTrig = 1;
+			}
+		}
+    }
+
+    if (irq_src & FLD_IRQ_ZB_RT_EN) {
+        if (src_rf & FLD_RF_IRQ_RX) {
+        	rx_done_cnt++;
+            MAC_RxIrqHandler();
+        }
+        if (src_rf & FLD_RF_IRQ_RX_TIMEOUT) {
+        	rx_timeout_done++;
+            MAC_RxTimeOutHandler();
+        }
+        if (src_rf & FLD_RF_IRQ_TX) {
+        	tx_done_cnt++;
+            rf_irq_clr_src(FLD_RF_IRQ_TX);
+
+        }
+
+    }
+    rf_irq_clr_src(FLD_RF_IRQ_ALL);
+    irq_clr_src();
+
+}
+
+
 
