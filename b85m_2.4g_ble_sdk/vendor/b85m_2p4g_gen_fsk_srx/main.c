@@ -154,6 +154,7 @@ _attribute_ram_code_ int main(void)
 #elif(MCU_CORE_TYPE == MCU_CORE_827x)
     cpu_wakeup_init(LDO_MODE,EXTERNAL_XTAL_24M);
 #endif
+    clock_init(SYS_CLK_24M_Crystal);
 
     user_init(4);
 
