@@ -1,7 +1,7 @@
 /********************************************************************************************************
- * @file	u_printf.h
+ * @file	app.h
  *
- * @brief	This is the header file for B85
+ * @brief	This is the header file for BLE SDK
  *
  * @author	BLE GROUP
  * @date	06,2020
@@ -43,21 +43,57 @@
  *          SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *******************************************************************************************************/
-#pragma once
+#ifndef APP_H_
+#define APP_H_
 
-#if (UART_PRINT_DEBUG_ENABLE || USB_PRINT_DEBUG_ENABLE)//print info by a gpio or usb printer
-	int  u_printf(const char *fmt, ...);
-	int  u_sprintf(char* s, const char *fmt, ...);
-	void u_array_printf(unsigned char*data, unsigned int len);
-	void my_printf(unsigned char*data, unsigned int len, const char *format, ...);
 
-	#define printf	 		u_printf
-	#define sprintf	 		u_sprintf
-    #define array_printf	u_array_printf
-#else
-	#define printf
-	#define sprintf
-	#define array_printf
-	#define my_printf
-#endif
 
+
+/**
+ * @brief		user initialization when MCU power on or wake_up from deepSleep mode
+ * @param[in]	none
+ * @return      none
+ */
+void user_init_normal(void);
+
+/**
+ * @brief		user initialization when MCU wake_up from deepSleep_retention mode
+ * @param[in]	none
+ * @return      none
+ */
+void user_init_deepRetn(void);
+
+
+/**
+ * @brief     BLE main loop
+ * @param[in]  none.
+ * @return     none.
+ */
+void main_loop (void);
+
+
+
+
+/**
+ * @brief      this function is used to detect if key pressed or released.
+ * @param[in]  e - LinkLayer Event type
+ * @param[in]  p - data pointer of event
+ * @param[in]  n - data length of event
+ * @return     none
+ */
+void proc_keyboard (u8 e, u8 *p, int n);
+
+
+/**
+ * @brief		this function is used to detect if button pressed or released.
+ * @param[in]	e - event type when this function is triggered by LinkLayer event
+ * @param[in]	p - event callback data pointer for when this function is triggered by LinkLayer event
+ * @param[in]	n - event callback data length when this function is triggered by LinkLayer event
+ * @return      none
+ */
+void proc_button (u8 e, u8 *p, int n);
+
+
+extern int button_not_released;
+
+#endif /* APP_H_ */

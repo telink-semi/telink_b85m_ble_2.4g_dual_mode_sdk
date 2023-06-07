@@ -49,7 +49,7 @@
 #include "application/print/putchar.h"
 #include "application/usbstd/usbhw.h"
 #include "drivers.h"
-
+#include "stack/ble/service/ota/ota_stack.h"
 
 #ifndef UART_PRINT_DEBUG_ENABLE
 #define UART_PRINT_DEBUG_ENABLE                    			0
@@ -122,12 +122,72 @@ int swire_putc(int c) {
 #define		BIT_INTERVAL		(16000000/PRINT_BAUD_RATE)
 #endif
 
+static int tx_pin_initialed = 0;
+
+/**
+ * @brief  DEBUG_INFO_TX_PIN initialize. Enable 1M pull-up resistor,
+ *   set pin as gpio, enable gpio output, disable gpio input.
+ * @param  None
+ * @retval None
+ */
+_attribute_no_inline_ void debug_info_tx_pin_init()
+{
+    gpio_setup_up_down_resistor(DEBUG_INFO_TX_PIN,PM_PIN_PULLUP_1M);
+    gpio_set_func(DEBUG_INFO_TX_PIN, AS_GPIO);
+	gpio_write(DEBUG_INFO_TX_PIN, 1);
+    gpio_set_output_en(DEBUG_INFO_TX_PIN, 1);
+    gpio_set_input_en(DEBUG_INFO_TX_PIN, 0);	
+}
+
+/* Put it into a function independently, to prevent the compiler from 
+ * optimizing different pins, resulting in inaccurate baud rates.
+ */
+_attribute_ram_code_ 
+_attribute_no_inline_ 
+static void uart_do_put_char(u32 pcTxReg, u8 *bit)
+{
+	int j;
+#if PRINT_BAUD_RATE == SIMU_BAUD_1M
+	/*! Make sure the following loop instruction starts at 4-byte alignment: (which is destination address of "tjne") */
+	// _ASM_NOP_; 
+	
+	for(j = 0;j<10;j++) 
+	{
+	#if CLOCK_SYS_CLOCK_HZ == 16000000
+		CLOCK_DLY_8_CYC;
+	#elif CLOCK_SYS_CLOCK_HZ == 32000000
+		CLOCK_DLY_7_CYC;CLOCK_DLY_7_CYC;CLOCK_DLY_10_CYC;
+	#elif CLOCK_SYS_CLOCK_HZ == 48000000
+		CLOCK_DLY_8_CYC;CLOCK_DLY_8_CYC;CLOCK_DLY_10_CYC;
+		CLOCK_DLY_8_CYC;CLOCK_DLY_6_CYC;
+	#else
+	#error "error CLOCK_SYS_CLOCK_HZ"
+	#endif
+		write_reg8(pcTxReg, bit[j]); 	   //send bit0
+	}
+#else
+	u32 t1 = 0, t2 = 0;
+	t1 = read_reg32(0x740);
+	for(j = 0;j<10;j++)
+	{
+		t2 = t1;
+		while(t1 - t2 < BIT_INTERVAL){
+			t1  = read_reg32(0x740);
+		}
+		write_reg8(pcTxReg,bit[j]);        //send bit0
+	}
+#endif
+}
+
 _attribute_ram_code_
 int uart_putc(char byte) //GPIO simulate uart print func
 {
-	unsigned char  j = 0;
-	unsigned int t1 = 0,t2 = 0;
+	if (!tx_pin_initialed) {
+	    debug_info_tx_pin_init();
+		tx_pin_initialed = 1;
+	}
 
+	unsigned char r = 0;
 	//REG_ADDR8(0x582+((DEBUG_INFO_TX_PIN>>8)<<3)) &= ~(DEBUG_INFO_TX_PIN & 0xff) ;//Enable output
 
 	unsigned int  pcTxReg = (0x583+((DEBUG_INFO_TX_PIN>>8)<<3));//register GPIO output
@@ -146,18 +206,16 @@ int uart_putc(char byte) //GPIO simulate uart print func
 	bit[8] = ((byte>>7) & 0x01)? tmp_bit1 : tmp_bit0;
 	bit[9] = tmp_bit1;
 
-	//unsigned char r = irq_disable();
-	t1 = read_reg32(0x740);
-	for(j = 0;j<10;j++)
-	{
-		t2 = t1;
-		while(t1 - t2 < BIT_INTERVAL){
-			t1  = read_reg32(0x740);
-		}
-		write_reg8(pcTxReg,bit[j]);        //send bit0
+	if(UART_PRINT_DISABLE_IRQ){
+		r = irq_disable();
 	}
-	//irq_restore(r);
+	
+	uart_do_put_char(pcTxReg, bit);
 
+	if(UART_PRINT_DISABLE_IRQ){
+		irq_restore(r);
+	}
+	
 	return byte;
 }
 #endif

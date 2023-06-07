@@ -192,6 +192,7 @@ static inline u64 mul64_32x32(u32 u, u32 v)
 }
 
 
-#define		MYFIFO_INIT(name,size,n)		u8 name##_b[size * n]={0};my_fifo_t name = {size,n,0,0, name##_b}
+#define		MYFIFO_INIT(name,size,n)		u8 name##_b[size * n]={0};my_fifo_t name = {size,n,0,0, name##_b};	\
+											STATIC_ASSERT(BIT_IS_POW2(n))
 #define		ATT_ALIGN4_DMA_BUFF(n)			(((n + 10) + 3) / 4 * 4)
 

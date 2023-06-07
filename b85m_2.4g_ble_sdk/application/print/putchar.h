@@ -47,6 +47,14 @@
 
 #ifndef WIN32
 
+#define SIMU_BAUD_115200    115200
+#define SIMU_BAUD_230400    230400
+#define SIMU_BAUD_1M        1000000
+
+#define PRINT_BAUD_RATE    	SIMU_BAUD_1M
+
+#define UART_PRINT_DISABLE_IRQ	(1 && !blotaSvr.ota_busy)
+
 int putchar(int c);
 
 #endif

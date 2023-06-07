@@ -1,7 +1,7 @@
 /********************************************************************************************************
- * @file	u_printf.h
+ * @file	main.c
  *
- * @brief	This is the header file for B85
+ * @brief	This is the source file for BLE SDK
  *
  * @author	BLE GROUP
  * @date	06,2020
@@ -43,21 +43,76 @@
  *          SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *******************************************************************************************************/
-#pragma once
-
-#if (UART_PRINT_DEBUG_ENABLE || USB_PRINT_DEBUG_ENABLE)//print info by a gpio or usb printer
-	int  u_printf(const char *fmt, ...);
-	int  u_sprintf(char* s, const char *fmt, ...);
-	void u_array_printf(unsigned char*data, unsigned int len);
-	void my_printf(unsigned char*data, unsigned int len, const char *format, ...);
-
-	#define printf	 		u_printf
-	#define sprintf	 		u_sprintf
-    #define array_printf	u_array_printf
-#else
-	#define printf
-	#define sprintf
-	#define array_printf
-	#define my_printf
+#include "tl_common.h"
+#include "drivers.h"
+#include "stack/ble/ble.h"
+#include "app.h"
+#if DUAL_MODE_ENABLE
+#include "dual_mode.h"
 #endif
+
+
+/**
+ * @brief   IRQ handler
+ * @param   none.
+ * @return  none.
+ */
+_attribute_ram_code_ void irq_handler(void)
+{
+#if DUAL_MODE_ENABLE
+	if(0 == dual_mode_gfsk_rf_irq_handler())
+#endif
+	{
+		irq_blt_sdk_handler ();
+	}
+}
+
+
+/**
+ * @brief		This is main function
+ * @param[in]	none
+ * @return      none
+ */
+_attribute_ram_code_ int main (void)    //must run in ramcode
+{
+
+	DBG_CHN0_LOW;   //debug
+
+	blc_pm_select_internal_32k_crystal();
+
+	#if(MCU_CORE_TYPE == MCU_CORE_825x)
+		cpu_wakeup_init();
+	#elif(MCU_CORE_TYPE == MCU_CORE_827x)
+		cpu_wakeup_init(LDO_MODE,EXTERNAL_XTAL_24M);
+	#endif
+
+	int deepRetWakeUp = pm_is_MCU_deepRetentionWakeup();  //MCU deep retention wakeUp
+
+	rf_drv_init(RF_MODE_BLE_1M);
+
+	gpio_init( !deepRetWakeUp );  //analog resistance will keep available in deepSleep mode, so no need initialize again
+
+	clock_init(SYS_CLK_TYPE);
+
+	if(!deepRetWakeUp){//read flash size
+		blc_readFlashSize_autoConfigCustomFlashSector();
+	}
+
+	blc_app_loadCustomizedParameters();  //load customized freq_offset cap value
+
+	if( deepRetWakeUp ){
+		user_init_deepRetn ();
+	}
+	else{
+		user_init_normal ();
+	}
+
+    irq_enable();
+	while (1) {
+#if (MODULE_WATCHDOG_ENABLE)
+		wd_clear(); //clear watch dog
+#endif
+		main_loop ();
+	}
+}
 

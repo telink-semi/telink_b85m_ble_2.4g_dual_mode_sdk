@@ -1,7 +1,7 @@
 /********************************************************************************************************
- * @file	u_printf.h
+ * @file	dual_mode.h
  *
- * @brief	This is the header file for B85
+ * @brief	This is the header file for BLE SDK
  *
  * @author	BLE GROUP
  * @date	06,2020
@@ -43,21 +43,46 @@
  *          SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *******************************************************************************************************/
-#pragma once
+#ifndef DUAL_MODE_H_
+#define DUAL_MODE_H_
 
-#if (UART_PRINT_DEBUG_ENABLE || USB_PRINT_DEBUG_ENABLE)//print info by a gpio or usb printer
-	int  u_printf(const char *fmt, ...);
-	int  u_sprintf(char* s, const char *fmt, ...);
-	void u_array_printf(unsigned char*data, unsigned int len);
-	void my_printf(unsigned char*data, unsigned int len, const char *format, ...);
+// ---------- GFSK RX MODE ENUM -----------
+#define GFSK_RX_MODE_ENUM_NORMAL		1
+#define GFSK_RX_MODE_ENUM_SRX			2
 
-	#define printf	 		u_printf
-	#define sprintf	 		u_sprintf
-    #define array_printf	u_array_printf
-#else
-	#define printf
-	#define sprintf
-	#define array_printf
-	#define my_printf
-#endif
+// ---------- DUAL MODE STATE ENUM --------
+typedef enum{
+	DUAL_MODE_ST_BLE					= 0,
+	DUAL_MODE_ST_GFSK					= 1,
+	DUAL_MODE_ST_GFSK_ONLY				= 2,
+}dual_mode_st_e;
 
+extern dual_mode_st_e 		s_dual_mode_st;
+extern my_fifo_t			scan_rx_fifo;
+extern u8 					scan_rx_fifo_b[];
+
+static inline int is_gfsk_only_mode()
+{
+	return (DUAL_MODE_ST_GFSK_ONLY == s_dual_mode_st);
+}
+
+/**
+*	@brief     This function serves to reboot RF power
+*	@param[in] none.
+*	@return	   none.
+*/
+static inline void reset_rf_power(void)
+{
+	analog_write(0x34,0x81);  		// power off
+ 	analog_write(0x34,0x80);  		// power on
+}
+
+void dual_mode_init();
+void dual_mode_main_loop();
+int dual_mode_gfsk_rf_irq_handler (void);
+void dual_mode_blt_brx_start_init ();
+
+void switch_to_gfsk_only_mode();
+
+
+#endif /* DUAL_MODE_H_ */

@@ -51,6 +51,8 @@
 	#include "../b85m_ble_remote/app_config.h"
 #elif (__PROJECT_8258_BLE_SAMPLE__ || __PROJECT_8278_BLE_SAMPLE__)
 	#include "../b85m_ble_sample/app_config.h"
+#elif (__PROJECT_8258_DUAL_MODE__ || __PROJECT_8278_DUAL_MODE__)
+	#include "../b85m_dual_mode/app_config.h"
 #elif (__PROJECT_8258_MODULE__ || __PROJECT_8278_MODULE__)
 	#include "../b85m_module/app_config.h"
 #elif (__PROJECT_8258_HCI__ || __PROJECT_8278_HCI__)

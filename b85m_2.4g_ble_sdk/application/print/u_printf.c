@@ -259,5 +259,24 @@ void u_array_printf(unsigned char*data, unsigned int len) {
 	u_printf("}\n");
 }
 
+unsigned char HexTable[]={'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+
+void my_printf(unsigned char*data, unsigned int len, const char *format, ...)
+{
+	int ret;
+	va_list args;
+
+	va_start( args, format );
+	ret = print(0, format, args);
+	va_end( args );
+
+	for(int i = 0; i < len; ++i){
+		putchar(HexTable[data[i]>>4]);
+		putchar(HexTable[data[i]&0xf]);
+		u_printf(" ");
+	}
+	u_printf("\n");
+}
+
 #endif
 

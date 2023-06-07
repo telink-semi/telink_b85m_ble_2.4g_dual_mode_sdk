@@ -206,8 +206,10 @@ typedef enum {
 	#define		RF_BLE_PACKET_CRC_OK(p)					((p[*((unsigned int*)p) + 3] & 0x01) == 0x0)
 
 	#if (1) // support RF RX/TX MAX data Length: 251byte
+		#if 0 // 2.4g API redefined warning.
 		#define		RF_PACKET_LENGTH_OK(p)				(MAKE_U16(p[1], p[0]) == p[5]+13)
 		#define		RF_PACKET_CRC_OK(p)					((p[MAKE_U16(p[1], p[0])+3] & 0x01) == 0x0)
+		#endif
 	#else
 		#define		RF_PACKET_LENGTH_OK(p)				(p[0] == p[5]+13)
 		#define		RF_PACKET_CRC_OK(p)					((p[p[0]+3] & 0x01) == 0x0)
