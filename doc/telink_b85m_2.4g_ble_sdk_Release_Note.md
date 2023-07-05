@@ -1,3 +1,23 @@
+# V3.0.6
+
+### Version
+* SDK version : telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.6
+  
+### Features
+* 825x_dual_mode project change scan 2.4G only to scan both ble and 2.4G in adv mode. 
+
+### BREAKING CHANGES
+* N/A
+
+### Version
+* SDK 版本 : base telink_b85m_ble_2.4g_dual_mode_sdk_v3.0.6
+
+### Features
+* 825x_dual_mode工程在广播状态下由只扫描2.4G改成循环扫描ble和2.4G广播包.
+
+### BREAKING CHANGES
+* N/A
+
 # V3.0.5
 
 ### Version

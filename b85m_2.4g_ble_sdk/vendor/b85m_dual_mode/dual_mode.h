@@ -46,6 +46,8 @@
 #ifndef DUAL_MODE_H_
 #define DUAL_MODE_H_
 
+#define DUAL_MODE_LED_INDICATE_EN		1
+		
 // ---------- GFSK RX MODE ENUM -----------
 #define GFSK_RX_MODE_ENUM_NORMAL		1
 #define GFSK_RX_MODE_ENUM_SRX			2
@@ -56,6 +58,17 @@ typedef enum{
 	DUAL_MODE_ST_GFSK					= 1,
 	DUAL_MODE_ST_GFSK_ONLY				= 2,
 }dual_mode_st_e;
+
+typedef struct{
+	u8 adv_scan; // 1:ble mode scan, 0:2.4G mode scan
+	u8 chn;
+	u16 time_ms;
+}dual_mode_scan_serial_t;
+
+typedef struct{
+	u8 serial_idx; // index in scan_serial
+	u32 start_tick;
+}dual_mode_scan_st_t;
 
 extern dual_mode_st_e 		s_dual_mode_st;
 extern my_fifo_t			scan_rx_fifo;
@@ -81,8 +94,10 @@ void dual_mode_init();
 void dual_mode_main_loop();
 int dual_mode_gfsk_rf_irq_handler (void);
 void dual_mode_blt_brx_start_init ();
+void blc_ll_initScanning_ble_adv(void);
 
 void switch_to_gfsk_only_mode();
 
+int controller_event_handler(u32 h, u8 *para, int n);
 
 #endif /* DUAL_MODE_H_ */

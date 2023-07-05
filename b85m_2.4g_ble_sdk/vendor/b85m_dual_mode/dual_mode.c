@@ -55,6 +55,16 @@ dual_mode_st_e s_dual_mode_st = DUAL_MODE_ST_BLE;
 #if (GFSK_RX_MODE_SEL == GFSK_RX_MODE_ENUM_NORMAL)
 #error TODO NORMAL MODE
 #else
+
+dual_mode_scan_serial_t scan_serial[] = {
+	{1, 37, 10},
+	{1, 38, 10},
+	{1, 39, 10},
+	{0, GFSK_RX_CHN, 10},
+};
+
+dual_mode_scan_st_t scan_state;
+
 #define RX_BUF_LEN              64
 #define RX_BUF_NUM              4
 
@@ -66,6 +76,13 @@ volatile static unsigned char *rx_payload = 0;
 volatile static unsigned int rx_timestamp = 0;
 volatile static unsigned char rssi = 0;
 volatile static unsigned int rx_timeout_cnt, rx_cnt = 0;
+
+#if DUAL_MODE_LED_INDICATE_EN
+int gfsk_rx_tick = 0;
+int ble_rx_tick = 0;
+u32 gfsk_led_start_tick = 0;
+u32 ble_led_start_tick = 0;
+#endif
 
 _attribute_ram_code_sec_noinline_ __attribute__((optimize("-Os"))) int gfsk_srx_irq_handler (void)
 {
@@ -110,12 +127,7 @@ _attribute_ram_code_sec_noinline_ __attribute__((optimize("-Os"))) int gfsk_srx_
 void gfsk_srx_init(unsigned char chn)
 {
 	u8 r = irq_disable();
-	s_dual_mode_st = DUAL_MODE_ST_GFSK;
-	
-    // LED pin config
-    gpio_set_func(GREEN_LED_PIN | RED_LED_PIN, AS_GPIO);
-    gpio_set_output_en(GREEN_LED_PIN | RED_LED_PIN, 1);
-    gpio_write(GREEN_LED_PIN | RED_LED_PIN, 0);
+	s_dual_mode_st = is_gfsk_only_mode() ? DUAL_MODE_ST_GFSK_ONLY:DUAL_MODE_ST_GFSK;
 
     // generic FSK Link Layer configuratioin
     unsigned char sync_word[4] = {0x53, 0x78, 0x56, 0x52};
@@ -148,18 +160,143 @@ void gfsk_srx_main_loop(void)
 		
 		switch_to_gfsk_only_mode();
 		my_fifo_pop(&scan_rx_fifo);
-        gpio_toggle(GREEN_LED_PIN);
-	}
-
-    if (is_gfsk_only_mode())
-    {
-    	gpio_write(RED_LED_PIN, 1);
-    }
-	else{
-		gpio_write(RED_LED_PIN, 0);
+		#if DUAL_MODE_LED_INDICATE_EN
+		gfsk_rx_tick = clock_time()|1;
+		#endif
 	}
 }
 #endif
+
+//------------------ ble adv filter start-------------------------------------//
+#ifndef USER_ADV_FILTER_EN
+#define USER_ADV_FILTER_EN		1
+#endif
+
+/**
+ * @brief:return 1 means keep this packet, return 0 to discard.
+ * @Note: user should not keep all adv packets, because they are too much. only keep those necessary packets by comparing playload, the less the better.
+ *        so that the blt_rxfifo_ can be more efficient. 
+ *        if "fifo_free_cnt" is less than 4, the packet should not be kept, or it may cause rx fifo overflowed.
+ */
+_attribute_ram_code_ u8 user_adv_filter_proc(u8 * p_rf_pkt)
+{
+	#if 1 // demo
+	rf_packet_adv_t * pAdv = (rf_packet_adv_t *)p_rf_pkt;
+	u8	sample_advData[] = { 0x05, 0x09, 'V', 'H', 'I', 'D'};
+	if(0 == memcmp(pAdv->data, sample_advData, 10)){
+		static u32 A_filter_adv_cnt;
+		A_filter_adv_cnt++;
+		return 1;
+	}
+	#endif
+	
+	return 0;
+}
+
+_attribute_ram_code_ int dual_mode_ble_adv_filter(u8 *raw_pkt)
+{
+
+    #define BLE_RCV_FIFO_MAX_CNT 	(8)	// set to 8 to keep same with last version. // refer to default buffer count of BLE generic SDK which is 8.
+	static u32 A_filter_cnt;
+	A_filter_cnt++;
+	u8 next_buffer =1;
+	u8 adv_type = 0;
+	u8 mesh_msg_type = 0;
+	u8 *p_mac = 0;
+	u8 *p_rf_pkt =	(raw_pkt + 0);
+
+	{ // make sure pAdv can be used only here.
+		rf_packet_adv_t * pAdv = (rf_packet_adv_t *)p_rf_pkt;
+		adv_type = pAdv->type;
+		mesh_msg_type = pAdv->data[1];
+		p_mac = pAdv->advA;
+	}
+
+	int adv_type_accept_flag = (LL_TYPE_ADV_NONCONN_IND == adv_type); // set default accept type.
+
+	// "fifo_free_cnt" here means if accepte this packet, there still is the number of "fifo_free_cnt" remained, because wptr has been ++.
+	u8 fifo_free_cnt = blt_rxfifo.num - ((u8)(blt_rxfifo.wptr - blt_rxfifo.rptr)&(blt_rxfifo.num-1));
+	if(blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
+		if(bltParam.ble_state == BLE_STATE_BRX_E){
+			if(fifo_free_cnt < max2(BLE_RCV_FIFO_MAX_CNT, 2)){
+				next_buffer = 0;
+			}else if(0 == adv_type_accept_flag){
+				next_buffer = 0;
+			#if (USER_ADV_FILTER_EN)
+				if(0 == next_buffer){
+					next_buffer = user_adv_filter_proc(p_rf_pkt);
+				}
+			#endif
+			}
+					
+		}else{			
+			if(fifo_free_cnt < 1){
+				write_reg8(0x800f00, 0x80); 		// stop ,just stop BLE state machine is enough 
+			}
+		}
+	}else{
+		if(0 == adv_type_accept_flag){
+			next_buffer = 0;
+
+		#if (USER_ADV_FILTER_EN)
+			if(0 == next_buffer){
+				next_buffer = user_adv_filter_proc(p_rf_pkt);
+			}
+		#endif
+		}
+		
+	    if (fifo_free_cnt < 4){
+			// can not make the fifo overflow 
+			next_buffer = 0;
+		}
+	}
+	
+	return next_buffer;
+
+}
+
+_attribute_ram_code_ int  blc_ll_procScanPkt_ble_adv(u8 *raw_pkt, u8 *new_pkt, u32 tick_now)
+{
+	return dual_mode_ble_adv_filter(raw_pkt);
+}
+
+void blc_ll_initScanning_ble_adv(void)
+{
+	blc_ll_procScanPktCb = blc_ll_procScanPkt_ble_adv;
+}
+//-------------------------ble adv filter end----------------------------------------//
+
+/**
+ * @brief      callback function of LinkLayer Event
+ * @param[in]  h     - LinkLayer Event type
+ * @param[in]  param - data pointer of event
+ * @param[in]  n     - data length of event
+ * @return     none
+ */
+int controller_event_handler(u32 h, u8 *para, int n)
+{
+	if(h == (HCI_FLAG_EVENT_BT_STD | HCI_EVT_LE_META)){
+		u8 subcode = para[0];
+
+		//------------ ADV packet --------------------------------------------
+		if (subcode == HCI_SUB_EVT_LE_ADVERTISING_REPORT)	// ADV packet
+		{
+			#if DUAL_MODE_LED_INDICATE_EN
+			ble_rx_tick = clock_time()|1;
+			#endif
+			event_adv_report_t *pa = (event_adv_report_t *)para;
+			if(LL_TYPE_ADV_NONCONN_IND != (pa->event_type & 0x0F)){
+				// LL_TYPE_ADV_IND
+				
+				return 0;
+			}
+			
+			// LL_TYPE_ADV_NONCONN_IND
+		}
+	}
+
+	return 0;
+}
 
 _attribute_ram_code_sec_noinline_ int dual_mode_gfsk_rf_irq_handler (void)
 {
@@ -176,30 +313,19 @@ void switch_to_gfsk_only_mode()
 	if(DUAL_MODE_ST_GFSK_ONLY != s_dual_mode_st)
 	{
 		blc_ll_setIdleState();
-		blc_ll_switchScanChannel(0, 0);
-		s_dual_mode_st = DUAL_MODE_ST_GFSK_ONLY;
+		s_dual_mode_st = DUAL_MODE_ST_GFSK_ONLY; 	
 	}
 }
 
-void blc_ll_switchScanChannel (int scan_mode, int set_chn)
-{
-	if(is_gfsk_only_mode() || blotaSvr.ota_busy){
-		return;
-	}
-	
-	if(scan_mode){
-		static volatile u32 dual_mode_1switch_chn_timer;dual_mode_1switch_chn_timer++;
-	}else{
-		static volatile u32 dual_mode_2switch_in_adv_conn;dual_mode_2switch_in_adv_conn++;
-		reset_rf_power();
-		gfsk_srx_init(GFSK_RX_CHN);
-		gen_fsk_srx_start(clock_time() + 10, 0); // RX first timeout is disabled and the transceiver won't exit the RX state until a packet arrives
+void switch_ble_scan_channel(int chn){
+	rf_set_tx_rx_off ();
+	rf_set_ble_channel (chn);
+	blt_ll_set_ble_access_code_adv ();
+	rf_set_ble_crc_adv ();
+	if(blc_rf_pa_cb){	blc_rf_pa_cb(PA_TYPE_RX_ON);  }
 
-		while(0){
-			gfsk_srx_main_loop();
-			static volatile u32 dual_mode_3switch_loop;dual_mode_3switch_loop++;
-		}
-	}
+	CLEAR_ALL_RFIRQ_STATUS;
+	rf_set_rxmode ();
 }
 
 _attribute_ram_code_ void dual_mode_switch2ble_init () // about 12us in 16MHz
@@ -219,6 +345,104 @@ _attribute_ram_code_ void dual_mode_switch2ble_init () // about 12us in 16MHz
 	}
 }
 
+/**
+ * @brief       This function server to get next gfsk scan serial index
+ * @return      
+ * @note        
+ */
+u8 get_next_gfsk_scan_serial()
+{
+	for(int i = 0; i < ARRAY_SIZE(scan_serial); i++){
+		u8 next_idx = (i + scan_state.serial_idx + 1) % ARRAY_SIZE(scan_serial);
+		if(scan_serial[next_idx].adv_scan == 0){
+			return next_idx;
+		}
+	}
+
+	return -1;
+}
+
+
+/**
+ * @brief       This function server to get next scan serial index
+ * @return      -1:invalid  other:next serial index
+ * @note        
+ */
+void dual_mode_scan_serial_update()
+{
+	u8 idx = -1;
+	if(is_gfsk_only_mode() || (blc_ll_getCurrentState() == BLS_LINK_STATE_CONN)){ // 2.4G scan only, get next 2.4G channel
+		idx = get_next_gfsk_scan_serial();
+	}
+	else{
+		idx = (scan_state.serial_idx + 1) % ARRAY_SIZE(scan_serial);
+	}
+
+	if(-1 != idx){
+		scan_state.start_tick = clock_time()|1;
+		scan_state.serial_idx = idx;
+	}
+	
+}
+
+u32 get_next_brx_invl_us()
+{
+	u32 t = reg_system_tick_irq - clock_time ();
+	if(t < BIT(31)){
+		return t/sys_tick_per_us;
+	}
+	else{
+		return 0;
+	}
+}
+
+/**
+ * @brief       This function server to switch scan channel.
+ * @param[in]   scan_mode	- 0:back to rx from tx, should force enable rx. 1:call by main loop, switch scan channel if need.
+ * @param[in]   set_chn	- scan channel.
+ * @return      none
+ * @note        
+ */
+void blc_ll_switchScanChannel (int scan_mode, int set_chn)
+{
+	if(blc_ll_getCurrentState() == BLS_LINK_STATE_CONN){
+		if(!(blts.scan_extension_mask & BLS_FLAG_SCAN_IN_SLAVE_MODE)){
+			return;
+		}
+		
+		u32 brx_time = get_next_brx_invl_us(); 
+		if((bltParam.ble_state != BLE_STATE_BRX_E) || (brx_time < 1500)){ // don't scan in brx state, not use get_next_brx_invl_us() instead of brx_time here.
+			return;	
+		}
+	}
+	else{
+		if(!(blts.scan_extension_mask & BLS_FLAG_SCAN_IN_ADV_MODE)){
+			return;
+		}
+	}
+
+	int scan_window_hit = (u32)(clock_time() - scan_state.start_tick) > scan_serial[scan_state.serial_idx].time_ms*1000*sys_tick_per_us;
+	if(scan_window_hit){
+		dual_mode_scan_serial_update();
+	}
+
+	if(scan_mode && !scan_window_hit){
+		return;
+	}
+
+	dual_mode_scan_serial_t *p_scan = &scan_serial[scan_state.serial_idx];
+	if(p_scan->adv_scan){ // ble channel
+		dual_mode_switch2ble_init();
+		switch_ble_scan_channel(p_scan->chn);
+	}
+	else{	// 2.4G channel
+		static u32 A_gfsk = 0;A_gfsk++;
+		reset_rf_power();
+		gfsk_srx_init(p_scan->chn);
+		gen_fsk_srx_start(clock_time() + 10, 0); // RX first timeout is disabled and the transceiver won't exit the RX state until a packet arrives			
+	}
+}
+
 int dual_mode_app_advertise_prepare (rf_packet_adv_t * p)
 {
 	int ret = 1;
@@ -232,9 +456,54 @@ _attribute_ram_code_ void dual_mode_blt_brx_start_init () // call in irq
 	dual_mode_switch2ble_init();
 }
 
+#if DUAL_MODE_LED_INDICATE_EN
+void dual_mode_led_indicate()
+{
+	#define LED_ONOFF_TIME_MS  200
+
+	// 2.4G only led 
+	if(is_gfsk_only_mode()){ 
+		gpio_write(RED_LED_PIN, 1);	// always on
+	}
+	else{
+		gpio_write(RED_LED_PIN, 0);
+	}
+	
+	// 2.4G rx led
+	if(gfsk_rx_tick){
+		if(clock_time_exceed(gfsk_led_start_tick, LED_ONOFF_TIME_MS*1000)){
+			gfsk_led_start_tick = clock_time()|1;
+			gpio_toggle(BLUE_LED_PIN);
+		}
+	}
+
+	if(gfsk_rx_tick && clock_time_exceed(gfsk_rx_tick, LED_ONOFF_TIME_MS*1000)){
+		gfsk_rx_tick = 0;
+		gpio_write(BLUE_LED_PIN, 0);
+	}
+
+	// ble adv led	
+	if(ble_rx_tick){
+		if(clock_time_exceed(ble_led_start_tick, LED_ONOFF_TIME_MS*1000)){
+			ble_led_start_tick = clock_time()|1;
+			gpio_toggle(GREEN_LED_PIN);
+		}
+	}
+
+	if(ble_rx_tick && clock_time_exceed(ble_rx_tick, LED_ONOFF_TIME_MS*1000)){
+		ble_rx_tick = 0;
+		gpio_write(GREEN_LED_PIN, 0);
+	}
+}
+#endif
+
 void dual_mode_main_loop()
 {
 	gfsk_srx_main_loop();
+	blc_ll_switchScanChannel(1, 0);
+#if DUAL_MODE_LED_INDICATE_EN
+	dual_mode_led_indicate();
+#endif
 }
 
 

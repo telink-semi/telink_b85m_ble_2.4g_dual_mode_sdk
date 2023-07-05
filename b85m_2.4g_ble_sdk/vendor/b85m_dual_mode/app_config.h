@@ -228,8 +228,22 @@
  */
 #if DUAL_MODE_ENABLE
 	#if (BOARD_SELECT == BOARD_825X_DONGLE_C1T139A3)
+//red LED on:2.4G only mode. green led shining:ble adv receiving. blue led shining:2.4G receiving.
 #define GREEN_LED_PIN           		GPIO_PA2	// just for test
 #define RED_LED_PIN             		GPIO_PA3	// just for test
+#define BLUE_LED_PIN             		GPIO_PB0	// just for test
+
+#define PA2_FUNC						AS_GPIO
+#define PA3_FUNC						AS_GPIO
+#define PB0_FUNC						AS_GPIO
+
+#define	PA2_OUTPUT_ENABLE				1
+#define	PA3_OUTPUT_ENABLE				1
+#define	PB0_OUTPUT_ENABLE				1
+
+#define	PA2_DATA_OUT					0
+#define	PA3_DATA_OUT					0
+#define	PB0_DATA_OUT					0
 	#else
 // TODO
 	#endif

@@ -80,7 +80,7 @@ _attribute_data_retention_	own_addr_type_t 	app_own_address_type = OWN_ADDRESS_P
  * @brief      LinkLayer RX & TX FIFO configuration
  */
 #define RX_FIFO_SIZE	64
-#define RX_FIFO_NUM		8
+#define RX_FIFO_NUM		16
 
 #define TX_FIFO_SIZE	40
 #define TX_FIFO_NUM		16
@@ -431,6 +431,7 @@ void app_enter_ota_mode(void)
 //		device_led_setup(led_cfg[LED_SHINE_OTA]);
 	#endif
 	bls_ota_setTimeout(60 * 1000 * 1000); //set OTA timeout  60 seconds
+	blc_ll_removeScanningFromConnSLaveRole(); // disable scan
 }
 
 
@@ -516,7 +517,10 @@ void user_init_normal(void)
 	blc_ll_initSlaveRole_module();				//slave module: 	 mandatory for BLE slave,
 	blc_ll_initPowerManagement_module();        //pm module:      	 optional
 
-
+	// enable ble scan module
+	blc_ll_initScanning_module(mac_public);		// scan module     
+	blc_hci_le_setEventMask_cmd(HCI_LE_EVT_MASK_ADVERTISING_REPORT);
+	blc_ll_initScanning_ble_adv();				// ble adv filter, dual_mode_ble_adv_filter()
 
 	////// Host Initialization  //////////
 	blc_gap_peripheral_init();    //gap initialization
@@ -591,8 +595,7 @@ void user_init_normal(void)
 	//ble event call back
 	bls_app_registerEventCallback (BLT_EV_FLAG_CONNECT, &task_connect);
 	bls_app_registerEventCallback (BLT_EV_FLAG_TERMINATE, &task_terminate);
-
-
+	blc_hci_registerControllerEventHandler(controller_event_handler);
 
 
 	///////////////////// Power Management initialization///////////////////
